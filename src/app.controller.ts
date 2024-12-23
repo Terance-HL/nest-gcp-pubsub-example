@@ -1,7 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { AppService } from './app.service';
 import { Ctx, MessagePattern, Payload } from '@nestjs/microservices';
-import { GCPPubSubContext } from './gcp-pubsub';
+import { GcpPubSubContext } from './gcp-pubsub';
 
 @Controller()
 export class AppController {
@@ -10,7 +10,7 @@ export class AppController {
 
   @MessagePattern('customer_signup')
   getHello(@Payload() data: any,
-    @Ctx() ctx: GCPPubSubContext,
+    @Ctx() ctx: GcpPubSubContext,
 ): string {
     console.log('customer_signup listener..', data);
     ctx.getMessage().ack();
@@ -20,7 +20,7 @@ export class AppController {
   @MessagePattern('')
   getHello2(
     @Payload('global') message: any,
-    @Ctx() ctx: GCPPubSubContext,
+    @Ctx() ctx: GcpPubSubContext,
   ): string {
     console.log('Global Listener..', message);
     const msg = ctx.getMessage();

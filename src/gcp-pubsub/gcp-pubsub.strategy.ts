@@ -10,13 +10,13 @@ import {
 } from 'src/gcp-pubsub/constants';
 import { Message, PubSub } from '@google-cloud/pubsub';
 
-import { GCPPubSubContext } from './gcp-pubsub.context';
+import { GcpPubSubContext } from './gcp-pubsub.context';
 import { Injectable } from '@nestjs/common';
 import { MessageAckMethod } from './enums';
 import { PubSubConfig } from './types';
 
 @Injectable()
-export class GCPubSubStrategy
+export class GcpPubSubStrategy
   extends Server
   implements CustomTransportStrategy
 {
@@ -90,7 +90,7 @@ export class GCPubSubStrategy
       await this.handleEvent(
         pattern,
         packet as IncomingRequest,
-        new GCPPubSubContext([message, pattern]),
+        new GcpPubSubContext([message, pattern]),
       );
     } else {
       const globalHandler = this.getHandlerByPattern('');
@@ -98,7 +98,7 @@ export class GCPubSubStrategy
         await this.handleEvent(
           '',
           packet as IncomingRequest,
-          new GCPPubSubContext([message, pattern]),
+          new GcpPubSubContext([message, pattern]),
         );
       }
     }

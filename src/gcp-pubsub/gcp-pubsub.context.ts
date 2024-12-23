@@ -1,7 +1,7 @@
 import { BaseRpcContext } from '@nestjs/microservices';
 import { Message } from '@google-cloud/pubsub';
 
-export class GCPPubSubContext extends BaseRpcContext {
+export class GcpPubSubContext extends BaseRpcContext {
   constructor(args: [Message, string]) {
     super(args);
   }

@@ -1,7 +1,7 @@
 import { PROJECT_ID, ROUTE_KEY, SUBSCRIPTION_NAME } from './constants';
 
 import { AppModule } from './app.module';
-import { GCPubSubStrategy } from './gcp-pubsub/';
+import { GcpPubSubStrategy } from './gcp-pubsub/';
 import { NestFactory } from '@nestjs/core';
 
 async function bootstrap() {
@@ -10,7 +10,7 @@ async function bootstrap() {
   /**
    * Sample full config example
    * {
-    strategy: new GCPubSubStrategy({
+    strategy: new GcpPubSubStrategy({
       projectId: 'highlevel-staging',
       subscriptionName: SUBSCRIPTION_NAME,
       flowControl: {
@@ -30,7 +30,7 @@ async function bootstrap() {
   // Register the custom transport strategy as a microservice
   // Rest of the configs can be injected by the config service here, rather than reading the environment variables directly
   app.connectMicroservice({
-    strategy: new GCPubSubStrategy({
+    strategy: new GcpPubSubStrategy({
       projectId: PROJECT_ID,
       subscriptionName: SUBSCRIPTION_NAME,
       routeKey: ROUTE_KEY
