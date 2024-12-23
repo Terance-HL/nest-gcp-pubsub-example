@@ -6,7 +6,6 @@ import { GcpPubSubContext } from './gcp-pubsub';
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
-  private testorrrr = 'testooorr';
 
   @MessagePattern('customer_signup')
   getHello(@Payload() data: any,
