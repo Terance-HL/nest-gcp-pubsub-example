@@ -8,12 +8,13 @@ import {
   DEFAULT_ACK_METHOD,
   DEFAULT_FLOW_CONTROL_MAX_MESSAGES,
 } from 'src/gcp-pubsub/constants';
-import { Message, PubSub } from '@google-cloud/pubsub';
+import { Message, PubSub, Subscription } from '@google-cloud/pubsub';
 
 import { GcpPubSubContext } from './gcp-pubsub.context';
 import { Injectable } from '@nestjs/common';
 import { MessageAckMethod } from './enums';
 import { PubSubConfig } from './types';
+import { ShutdownState } from './global-shutdown.state';
 
 @Injectable()
 export class GcpPubSubStrategy
@@ -24,6 +25,8 @@ export class GcpPubSubStrategy
     projectId: '',
     subscriptionName: '',
   };
+  private subscription: Subscription;
+  private isSubscriptionClosed: boolean;
 
   constructor(config: PubSubConfig) {
     super();
@@ -39,30 +42,36 @@ export class GcpPubSubStrategy
     this.config.batching = config.batching;
     this.config.ackMethod = config.ackMethod || DEFAULT_ACK_METHOD;
     this.config.routeKey = config.routeKey;
-    
+
     this.initializeSerializer(this.config);
     this.initializeDeserializer(this.config);
   }
 
   listen(callback: () => void) {
-    console.log(
-      'Listening for Google Cloud Pub/Sub messages...',
-    );
+    console.log('PUBSUB::Listening for Google Cloud Pub/Sub messages...');
 
     const pubSubClient = new PubSub({ projectId: this.config.projectId });
 
-    const subscription = pubSubClient.subscription(this.config.subscriptionName, {
-      flowControl: this.config.flowControl,
-      ackDeadline: this.config.ackDeadline,
-      batching: this.config.batching,
-    });
-
-    subscription.on('message', async (message: Message) =>
-      this.handleMessage(message),
+    this.subscription = pubSubClient.subscription(
+      this.config.subscriptionName,
+      {
+        flowControl: this.config.flowControl,
+        ackDeadline: this.config.ackDeadline,
+        batching: this.config.batching,
+      },
     );
 
-    subscription.on('error', (error) => {
-      console.error('Subscription error:', error);
+    this.subscription.on('message', async (message: Message) => {
+      if (ShutdownState.isShuttingDown) {
+        this.close();
+        return;
+      }
+
+      return this.handleMessage(message);
+    });
+
+    this.subscription.on('error', (error) => {
+      console.error('PUBSUB::Subscription error:', error);
       this.close();
     });
 
@@ -108,7 +117,21 @@ export class GcpPubSubStrategy
     }
   }
 
-  close() {
-    console.log('Closing the Google Cloud Pub/Sub connection...');
+  async close() {
+    // Ensuring idempotency of the close method
+    if (this.isSubscriptionClosed) {
+      return;
+    }
+
+    console.log('PUBSUB::Closing the Google Cloud Pub/Sub connection...');
+
+    this.isSubscriptionClosed = true;
+
+    await new Promise((resolve) => {
+      this.subscription.close(() => {
+        console.log('PUBSUB::Subscription has been closed!');
+        resolve(true);
+      });
+    });
   }
 }

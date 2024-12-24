@@ -6,6 +6,7 @@ import { NestFactory } from '@nestjs/core';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.enableShutdownHooks();
 
   /**
    * Sample full config example
@@ -26,14 +27,20 @@ async function bootstrap() {
       routeKey: 'route',
       ackMethod: MessageAckMethod.Manual,
     }
-   */
+    */
   // Register the custom transport strategy as a microservice
   // Rest of the configs can be injected by the config service here, rather than reading the environment variables directly
   app.connectMicroservice({
     strategy: new GcpPubSubStrategy({
       projectId: PROJECT_ID,
       subscriptionName: SUBSCRIPTION_NAME,
-      routeKey: ROUTE_KEY
+      routeKey: ROUTE_KEY,
+      flowControl: {
+        maxMessages: 1000, // no.of messages coming in
+        allowExcessMessages: false,
+        maxExtension: 60, // maximum duration that Pub/Sub will continue to extend the acknowledgment deadline
+      },
+      ackDeadline: 30,
     }),
   });
 
