@@ -44,9 +44,20 @@ async function bootstrap() {
     }),
   });
 
+  process.on('uncaughtException', (error) => {
+    console.error('🔥 Uncaught Exception:', error);
+    app.close().then(() => process.exit(1));
+  });
+
+  // Handle unhandledRejection
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error('🔥 Unhandled Rejection at:', promise, 'reason:', reason);
+    app.close().then(() => process.exit(1));
+  });
+
   // Start the microservices and HTTP server
   await app.startAllMicroservices();
-  await app.listen(3000); // Optional for HTTP server
+  // await app.listen(3000); // Optional for HTTP server
 }
 
 bootstrap();
